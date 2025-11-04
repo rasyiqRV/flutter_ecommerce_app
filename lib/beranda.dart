@@ -45,7 +45,7 @@ class Halaman_Utama extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search bar
+            // 🔍 Search bar
             Container(
               color: const Color(0xFF3B82F6),
               padding: const EdgeInsets.all(16),
@@ -65,7 +65,7 @@ class Halaman_Utama extends StatelessWidget {
               ),
             ),
 
-            // Kategori
+            // 📂 Kategori
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text(
@@ -120,32 +120,82 @@ class Halaman_Utama extends StatelessWidget {
               ),
             ),
 
+            // 🛍️ Banner Promo
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Center(
-                  child: Text(
-                    "Promo Spesial Minggu Ini!",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.network(
+                      "https://tse4.mm.bing.net/th/id/OIP.sieZHgCUcf9KLD2HMdcU_gHaEc?pid=Api&P=0&h=220",
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 150,
+                          color: Colors.grey.shade300,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF3B82F6),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 150,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
+                    Container(
+                      height: 150,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.45),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                    const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Promo Spesial Minggu Ini!",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          "Diskon hingga 70% untuk produk pilihan 🔥",
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Produk rekomendasi
+            // 🧢 Produk rekomendasi
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text(
@@ -157,75 +207,150 @@ class Halaman_Utama extends StatelessWidget {
                 ),
               ),
             ),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 0.8,
-              children: [
-                produkCard("Sneakers", "Rp 299.000"),
-                produkCard("Smartwatch", "Rp 499.000"),
-                produkCard("Headphone", "Rp 199.000"),
-                produkCard("Hoodie", "Rp 159.000"),
-              ],
+
+            // 💡 Produk grid diperbaiki
+            LayoutBuilder(
+              builder: (context, constraints) {
+                int crossAxisCount = 2;
+                if (constraints.maxWidth > 1000) {
+                  crossAxisCount = 5;
+                } else if (constraints.maxWidth > 700) {
+                  crossAxisCount = 4;
+                } else if (constraints.maxWidth > 500) {
+                  crossAxisCount = 3;
+                }
+
+                return GridView.builder(
+                  itemCount: produkList.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.72, // ✅ lebih ramping dan proporsional
+                  ),
+                  itemBuilder: (context, index) {
+                    final produk = produkList[index];
+                    return produkCard(
+                      produk['nama']!,
+                      produk['harga']!,
+                      produk['gambar']!,
+                    );
+                  },
+                );
+              },
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  // Kategori item dengan animasi hover & tap
-  static Widget kategoriItem(String nama, IconData icon, VoidCallback onTap) {
-    return _AnimatedKategoriItem(nama: nama, icon: icon, onTap: onTap);
-  }
+  // 🔹 Data produk
+  static final List<Map<String, String>> produkList = [
+    {
+      "nama": "Sneakers",
+      "harga": "Rp 2.299.000",
+      "gambar": "assets/images/sepatu_nike.jpeg",
+    },
+    {
+      "nama": "Smartwatch",
+      "harga": "Rp 499.000",
+      "gambar": "assets/images/smartwacth.jpeg",
+    },
+    {
+      "nama": "Headphone",
+      "harga": "Rp 5.199.000",
+      "gambar": "assets/images/iphone.jpeg",
+    },
+    {
+      "nama": "Hoodie",
+      "harga": "Rp 159.000",
+      "gambar": "assets/images/hoodie.jpeg",
+    },
+  ];
 
-  static Widget produkCard(String nama, String harga) {
+  // 🔹 Produk card
+  static Widget produkCard(String nama, String harga, String gambar) {
     return Container(
-      margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.shopping_bag, size: 40, color: Color(0xFF3B82F6)),
-            const SizedBox(height: 16),
-            Text(
-              nama,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E3A8A),
+      child: Column(
+        children: [
+          Expanded(
+            flex: 7,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
+              child: AspectRatio(
+                aspectRatio: 1, // biar gak gepeng
+                child: Image.asset(
+                  gambar,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              harga,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF2563EB),
-                fontWeight: FontWeight.bold,
+          ),
+
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    nama,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E3A8A),
+                    ),
+                  ),
+                  Text(
+                    harga,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+  // 🔹 Kategori item
+  static Widget kategoriItem(String nama, IconData icon, VoidCallback onTap) {
+    return _AnimatedKategoriItem(nama: nama, icon: icon, onTap: onTap);
+  }
 }
 
-// Widget kategori dengan animasi hover + tap
+// 🔹 Animasi kategori
 class _AnimatedKategoriItem extends StatefulWidget {
   final String nama;
   final IconData icon;
@@ -285,12 +410,12 @@ class _AnimatedKategoriItemState extends State<_AnimatedKategoriItem> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: const Color(0xFF3B82F6), size: 30),
+              Icon(widget.icon, color: const Color(0xFF3B82F6), size: 28),
               const SizedBox(height: 8),
               Text(
                 widget.nama,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: Color(0xFF1E3A8A),
                 ),
