@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:universal_io/io.dart' as universal_io;
-import 'package:navigator/main.dart';
+import 'package:navigator/main.dart'; // Sesuaikan path import ini jika berbeda
 
 class Profil extends StatefulWidget {
   const Profil({super.key});
@@ -15,17 +15,40 @@ class Profil extends StatefulWidget {
 }
 
 class _ProfilState extends State<Profil> {
+  // Variabel untuk gambar profil
   File? _imageFile;
   Uint8List? _webImage;
   final ImagePicker _picker = ImagePicker();
+
+  // Variabel untuk Info Mahasiswa (Stateful)
+  String _prodi = 'Informatika';
+  String _semester = '5';
+  String _email = 'rasyiqfirmansyah16@gmail.com';
+  String _noHp = '+62 812-3456-7890';
+
+  final List<String> _prodiList = ['Informatika', 'Mesin', 'Sipil', 'Arsitek'];
 
   @override
   void initState() {
     super.initState();
     _loadSavedImage();
+    _loadProfileData();
+  }
+
+  // --- Fungsi Load/Save/Remove Image ---
+
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _prodi = prefs.getString('prodi') ?? 'Informatika';
+      _semester = prefs.getString('semester') ?? '5';
+      _email = prefs.getString('email') ?? 'rasyiqfirmansyah16@gmail.com';
+      _noHp = prefs.getString('noHp') ?? '+62 812-3456-7890';
+    });
   }
 
   Future<void> _pickImage() async {
+    // ... (kode _pickImage yang sudah ada)
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery);
       if (picked != null) {
@@ -51,6 +74,7 @@ class _ProfilState extends State<Profil> {
   }
 
   Future<void> _loadSavedImage() async {
+    // ... (kode _loadSavedImage yang sudah ada)
     final prefs = await SharedPreferences.getInstance();
     final savedImage = prefs.getString('profile_image');
     if (savedImage != null) {
@@ -67,6 +91,7 @@ class _ProfilState extends State<Profil> {
   }
 
   Future<void> _removeImage() async {
+    // ... (kode _removeImage yang sudah ada)
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('profile_image');
     setState(() {
@@ -74,6 +99,131 @@ class _ProfilState extends State<Profil> {
       _webImage = null;
     });
   }
+
+  // --- Fungsi Edit Modal ---
+
+  void _showEditModal() {
+    // Inisialisasi controller dengan data saat ini
+    String tempProdi = _prodi;
+    String tempSemester = _semester;
+    final TextEditingController emailController = TextEditingController(
+      text: _email,
+    );
+    final TextEditingController noHpController = TextEditingController(
+      text: _noHp,
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Info Mahasiswa'),
+          content: SingleChildScrollView(
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setModalState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Field Prodi (Dropdown)
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Prodi',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      hint: const Text('Pilih Prodi'),
+                      value: tempProdi,
+                      items: List.from(
+                        _prodiList.map((p) {
+                          // <-- Perubahan ada di sini: List.from(...)
+                          return DropdownMenuItem(value: p, child: Text(p));
+                        }),
+                      ), // Menghilangkan .toList() dan menggantinya dengan List.from
+                      onChanged: (v) => setModalState(() => tempProdi = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    // Field Semester
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: 'Semester',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      initialValue: tempSemester,
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) => tempSemester = v,
+                    ),
+                    const SizedBox(height: 12),
+                    // Field Email
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
+                    // Field No. HP
+                    TextField(
+                      controller: noHpController,
+                      decoration: const InputDecoration(
+                        labelText: 'No. HP',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Simpan perubahan ke State dan SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('prodi', tempProdi);
+                await prefs.setString('semester', tempSemester);
+                await prefs.setString('email', emailController.text.trim());
+                await prefs.setString('noHp', noHpController.text.trim());
+
+                setState(() {
+                  _prodi = tempProdi;
+                  _semester = tempSemester;
+                  _email = emailController.text.trim();
+                  _noHp = noHpController.text.trim();
+                });
+
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- Widget Build ---
 
   @override
   Widget build(BuildContext context) {
@@ -166,58 +316,36 @@ class _ProfilState extends State<Profil> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Info Mahasiswa",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF3B82F6),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Info Mahasiswa",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
+                        ),
+                        // Tombol Edit Baru
+                        GestureDetector(
+                          onTap: _showEditModal,
+                          child: const Icon(
+                            Icons.edit,
+                            color: Color(0xFF3B82F6),
+                            size: 20,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "Prodi: ",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text("Informatika"),
-                      ],
-                    ),
+                    _buildInfoRow("Prodi:", _prodi),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "Semester: ",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text("5"),
-                      ],
-                    ),
+                    _buildInfoRow("Semester:", _semester),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "Email: ",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text("rasyiqfirmansyah16@gmail.com"),
-                      ],
-                    ),
+                    _buildInfoRow("Email:", _email),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "No. HP: ",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text("+62 812-3456-7890"),
-                      ],
-                    ),
+                    _buildInfoRow("No. HP:", _noHp),
                   ],
                 ),
               ),
@@ -225,7 +353,7 @@ class _ProfilState extends State<Profil> {
 
             const SizedBox(height: 24),
 
-            // Info Section lainnya
+            // Info Section lainnya (Pesanan Saya, Alamat, dll.)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -317,6 +445,17 @@ class _ProfilState extends State<Profil> {
           ],
         ),
       ),
+    );
+  }
+
+  // Widget bantu untuk baris info
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(value),
+      ],
     );
   }
 }
